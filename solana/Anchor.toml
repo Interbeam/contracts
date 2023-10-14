@@ -1,0 +1,47 @@
+[features]
+seeds = false
+skip-lint = false
+
+[workspace]
+members = [
+    "programs/interbeam",
+]
+
+[programs.localnet]
+interbeam = "beam111111111111111111111111111111111111111"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "npx ts-mocha -p ./tsconfig.json -t 1000000 ts/tests/*.test.ts"
+
+[test]
+startup_wait = 10000
+
+[test.validator]
+url = "https://api.mainnet-beta.solana.com"
+
+### MPL Token Metadata
+[[test.validator.clone]]
+address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+
+### Wormhole Core Bridge
+[[test.validator.clone]]
+address = "worm2ZoG2kUd4vFXhvjh93UUH596ayRfgQ2MgjNMTth"
+
+### Wormhole Token Bridge
+[[test.validator.clone]]
+address = "wormDTUJ6AWPNvk59vGQbDvGJmqbDTdgWgAqcLBCgUb"
+
+### Marginfi V2
+[[test.validator.clone]]
+address = "MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA"
+
+### Solend
+[[test.validator.clone]]
+address = "So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo"

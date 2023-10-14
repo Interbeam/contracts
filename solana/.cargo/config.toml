@@ -1,0 +1,2 @@
+[env]
+INTERBEAM_PROGRAM_ID_FILE = "../../../target/deploy/interbeam-program_id.bin"

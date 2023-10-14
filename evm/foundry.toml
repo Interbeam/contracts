@@ -1,0 +1,30 @@
+# See more config options https://book.getfoundry.sh/reference/config/overview?highlight=config#config-overview
+
+# Note: don't explicitly set the `solc` version here, as there are multiple solc versions used in the project
+
+[profile.default]
+auto_detect_solc = true
+src = "contracts"
+test = "forge-tests"
+out = "forge-artifacts"
+libs = ["node_modules", "lib"]
+gas_reports = ["*"]
+fs_permissions = [{ access = "read", path = "./forge-artifacts"}]
+optimizer = true
+optimizer_runs = 20000
+remappings = [
+		"lib/=lib/",
+		# forge
+		"ds-test/=lib/forge-std/lib/ds-test/src/",
+		"forge-tests/=forge-tests",
+		"forge-std/=lib/forge-std/src/",
+		# external
+		"@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+		"@uniswap/v3-periphery/=lib/v3-periphery/",
+		"@uniswap/v3-core/=lib/v3-core/",
+		"eth-gas-reporter/=node_modules/eth-gas-reporter/",
+		"oz/=lib/openzeppelin-contracts/contracts/",
+		"openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/",
+		"openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+    "wormhole-solidity-sdk/=lib/wormhole-solidity-sdk/src/"
+]

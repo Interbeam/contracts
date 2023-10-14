@@ -1,0 +1,31 @@
+[package]
+name = "interbeam"
+version = "0.1.0"
+description = "Interbeam Solana program"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "interbeam"
+
+[features]
+default = ["mainnet"]
+mainnet = ["wormhole-anchor-sdk/mainnet"]
+testnet = ["wormhole-anchor-sdk/solana-devnet"]
+devnet = ["wormhole-anchor-sdk/tilt-devnet"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+
+[dependencies]
+solana-program = "1.16.14"
+# anchor-lang = { git = "https://github.com/coral-xyz/anchor.git", features = ["init-if-needed"]}
+# anchor-spl = { git = "https://github.com/coral-xyz/anchor.git"}
+
+anchor-lang = { version = "0.28.0", features = ["init-if-needed"]}
+anchor-spl = { version = "0.28.0" }
+
+wormhole-anchor-sdk = { path = "../../modules/wormhole-anchor-sdk", default-features = false, features = ["token-bridge"] }
+
+# wormhole-anchor-sdk = { version = "0.1.0-alpha.2", default-features = false, features = ["token-bridge"]}

@@ -1,0 +1,16 @@
+build
+coverage
+out
+forge-artifacts
+lib
+assets
+node_modules
+.next
+
+# files
+*.env
+*.log
+.pnp.*
+coverage.json
+yarn-debug.log*
+yarn-error.log*

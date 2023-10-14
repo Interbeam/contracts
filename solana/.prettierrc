@@ -1,0 +1,15 @@
+{
+	"semi": false,
+	"trailingComma": "none",
+	"singleQuote": true,
+	"printWidth": 100,
+	"tabWidth": 2,
+  "overrides": [
+    {
+      "files": "*.rs",
+      "printWidth": 120,
+      "semi": true,
+      "tabWidth": 4
+    }
+  ]
+}
