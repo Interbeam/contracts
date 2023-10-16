@@ -92,7 +92,7 @@ contract AaveV3AdapterTest is BaseSetup {
         assert(withdrawAmount == amountWithdrawn);
     }
 
-    function test_Beam2marginfi() public {
+    function test_Beam2marginfi_USDC() public {
         uint256 depositAmount = 100e6;
         uint256 withdrawAmount = 50e6;
 
@@ -114,6 +114,43 @@ contract AaveV3AdapterTest is BaseSetup {
         VaaKey memory vaaKey = aaveAdapter.beam2marginfi(
             address(USDC),
             address(aUSDC),
+            withdrawAmount,
+            3000,
+            toWormholeFormat(address(0))
+        );
+
+        console2.log("vaaKey.emitterAddress, vaaKey.chainId, vaaKey.sequence");
+        console2.logBytes32(vaaKey.emitterAddress);
+        console2.log(vaaKey.chainId);
+        console2.log(vaaKey.sequence);
+
+        vm.stopPrank();
+    }
+
+    function test_Beam2marginfi_WETH() public {
+        uint256 depositAmount = 2 ether;
+        uint256 withdrawAmount = 1 ether;
+
+        vm.startPrank(alice);
+
+        WETH.deposit{value: depositAmount}();
+
+        // Approve to deposit WETH into Aave Pool
+        WETH.approve(address(aavePool), type(uint256).max);
+        aavePool.deposit(address(WETH), depositAmount, alice, 0);
+
+        {
+            (Vm.CallerMode callerMode, address msgSender, ) = vm.readCallers();
+            // assertEq(uint256(callerMode), uint256(Vm.CallerMode.Prank));
+            assertEq(msgSender, alice);
+        }
+
+        // Approve to transfer aToken from alice to aaveAdapter
+        aWETH.approve(address(aaveAdapter), type(uint256).max);
+
+        VaaKey memory vaaKey = aaveAdapter.beam2marginfi(
+            address(WETH),
+            address(aWETH),
             withdrawAmount,
             3000,
             toWormholeFormat(address(0))

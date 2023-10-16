@@ -3,6 +3,7 @@ pragma solidity >=0.8.0;
 
 import {console2} from "forge-std/console2.sol";
 
+import {Ownable} from "oz/access/Ownable.sol";
 import {IERC20} from "oz/token/ERC20/IERC20.sol";
 
 import {IInterbeam} from "./interfaces/IInterbeam.sol";
@@ -15,7 +16,7 @@ import {WormholeStructs} from "./wormhole/WormholeStructs.sol";
 import "./wormhole/WormholeUtils.sol";
 
 // All parent contracts must be OZ upgradeable-compatible
-contract AaveV3Adapter {
+contract AaveV3Adapter is Ownable {
     /// @dev Aave pool address, acquired from the Aave address provider (getPool)
     IPool public aavePool;
 
@@ -35,8 +36,22 @@ contract AaveV3Adapter {
         address _interbeam,
         address _nativeToken,
         address _usdc
-    ) {
+    ) Ownable(msg.sender) {
         // oracle = AaveOracle(_oracle);
+        aavePool = IPool(IPoolAddressesProvider(_aavePoolAddressProvider).getPool());
+        uniSwapper = IUniSwapper(_uniSwapper);
+        interbeam = IInterbeam(_interbeam);
+        nativeToken = IERC20(_nativeToken);
+        USDC = IERC20(_usdc);
+    }
+
+    function setParams(
+        address _aavePoolAddressProvider,
+        address _uniSwapper,
+        address _interbeam,
+        address _nativeToken,
+        address _usdc
+    ) public onlyOwner {
         aavePool = IPool(IPoolAddressesProvider(_aavePoolAddressProvider).getPool());
         uniSwapper = IUniSwapper(_uniSwapper);
         interbeam = IInterbeam(_interbeam);
@@ -67,6 +82,7 @@ contract AaveV3Adapter {
 
         if (asset != address(USDC)) {
             // TODO: multi-hop
+            IERC20(asset).approve(address(uniSwapper), amount);
             amountInUSDC = uniSwapper.swapExactInputSingleHopV3(asset, address(USDC), swapPoolFee, amount);
         } else {
             amountInUSDC = amount;
@@ -75,22 +91,23 @@ contract AaveV3Adapter {
         USDC.approve(address(interbeam), amountInUSDC);
 
         // console2.log("amount", amount);
-        return interbeam.beamMessage(
-            // address(USDC),
-            amount,
-            WormholeStructs.InterbeamMessage({
-                chainId: 0, // overwrriten in interbeam.beamMessage
-                messageType: WormholeStructs.InterbeamMessageType.MARGINFI,
-                tokenA: toWormholeFormat(asset),
-                tokenB: toWormholeFormat(asset),
-                amountTokenA: amount,
-                amountTokenB: amount,
-                amountUSDC: amountInUSDC,
-                sender: toWormholeFormat(msg.sender),
-                recipient: recipientOnSolana,
-                payloadSize: 0,
-                payload: ""
-            })
-        );
+        return
+            interbeam.beamMessage(
+                // address(USDC),
+                amountInUSDC,
+                WormholeStructs.InterbeamMessage({
+                    chainId: 0, // overwrriten in interbeam.beamMessage
+                    messageType: WormholeStructs.InterbeamMessageType.MARGINFI,
+                    tokenA: toWormholeFormat(asset),
+                    tokenB: toWormholeFormat(asset),
+                    amountTokenA: amount,
+                    amountTokenB: amount,
+                    amountUSDC: amountInUSDC,
+                    sender: toWormholeFormat(msg.sender),
+                    recipient: recipientOnSolana,
+                    payloadSize: 0,
+                    payload: ""
+                })
+            );
     }
 }
