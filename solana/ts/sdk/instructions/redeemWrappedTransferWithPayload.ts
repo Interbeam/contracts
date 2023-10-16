@@ -53,7 +53,7 @@ export async function createRedeemWrappedTransferWithPayloadTx(
   wormholeProgramId: PublicKeyInitData,
   wormholeMessage: SignedVaa | ParsedTokenTransferVaa,
   payloadParser: (parsed: ParsedTokenTransferVaa) => InterbeamMessage
-): Promise<[Transaction]> {
+): Promise<[Transaction, VersionedTransaction]> {
   const program = createInterbeamProgramInterface(connection, programId)
 
   const parsed = isBytes(wormholeMessage) ? parseTokenTransferVaa(wormholeMessage) : wormholeMessage
@@ -89,11 +89,11 @@ export async function createRedeemWrappedTransferWithPayloadTx(
   console.log('  recipient', recipient.toBase58())
   console.log('  recipientTokenAccount', recipientTokenAccount.toBase58())
 
-  // const programTokenAccountUSDC = getAssociatedTokenAddressSync(
-  //   SVM_USDC,
-  //   new PublicKey(programId),
-  //   true
-  // )
+  const programTokenAccountUSDC = getAssociatedTokenAddressSync(
+    SVM_USDC,
+    new PublicKey(programId),
+    true
+  )
 
   // console.log(parsedPayload.messageLength.toString())
   // console.log(parsedPayload.messageType.toString())
@@ -102,18 +102,18 @@ export async function createRedeemWrappedTransferWithPayloadTx(
   // console.log(parsedPayload.amountTokenA.toString('hex'))
   // console.log(parsedPayload.amountTokenB.toString('hex'))
 
-  // const { computeBudgetIxs, setupIxs, swapIx, swapAccounts, swapData, addressLookupTableAccounts } =
-  //   await getSwapDataForUSDCet2USDC({
-  //     connection,
-  //     tmpTokenAccountUSDCet: tmpTokenAccount,
-  //     programTokenAccountUSDC,
-  //     // TODO: check against really large conversions, potential overflow
-  //     amount: BigNumber.from(parsedPayload.amountUSDC).toNumber()
-  //   })
-  // console.log(swapData.length, swapData.byteLength, swapData)
+  const { computeBudgetIxs, setupIxs, swapIx, swapAccounts, swapData, addressLookupTableAccounts } =
+    await getSwapDataForUSDCet2USDC({
+      connection,
+      tmpTokenAccountUSDCet: tmpTokenAccount,
+      programTokenAccountUSDC,
+      // TODO: check against really large conversions, potential overflow
+      amount: BigNumber.from(parsedPayload.amountUSDC).toNumber()
+    })
+  console.log(swapData.length, swapData.byteLength, swapData)
 
   const redeemWrappedTransferWithPayloadIx = await program.methods
-    .redeemWrappedTransferWithPayload({ vaaHash: [...parsed.hash] })
+    .redeemWrappedTransferWithPayload({ vaaHash: [...parsed.hash], jupiterSwapData: swapData })
     .accounts({
       config: deriveRedeemerConfigKey(programId),
       foreignContract: deriveForeignContractKey(programId, parsed.emitterChain as ChainId),
@@ -126,17 +126,23 @@ export async function createRedeemWrappedTransferWithPayloadTx(
       ...tokenBridgeAccounts
       // jupiterProgram: new PublicKey('JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4')
     })
-    // .remainingAccounts(swapAccounts)
+    .remainingAccounts(swapAccounts)
     .instruction()
 
   // const instructions = [...computeBudgetIxs, setupIxs]
 
-  // const txPre = new TransactionMessage({
-  //   payerKey: new PublicKey(payer),
-  //   recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
-  //   instructions: [...computeBudgetIxs, ...setupIxs]
-  // }).compileToLegacyMessage()
-  const txRedeem = new Transaction().add(redeemWrappedTransferWithPayloadIx)
+  const txPre = new TransactionMessage({
+    payerKey: new PublicKey(payer),
+    recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
+    instructions: [...computeBudgetIxs, ...setupIxs]
+  }).compileToLegacyMessage()
+
+  const txRedeem = new TransactionMessage({
+    payerKey: new PublicKey(payer),
+    recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
+    instructions: [redeemWrappedTransferWithPayloadIx]
+  }).compileToV0Message(addressLookupTableAccounts)
+  // const txRedeem = new Transaction().add(redeemWrappedTransferWithPayloadIx)
 
   // const serialized = txRedeem.serialize({
   //   verifySignatures: false,
@@ -145,9 +151,9 @@ export async function createRedeemWrappedTransferWithPayloadTx(
   // const size = serialized.length + 1 + txRedeem.signatures.length * 64
   // console.log('serialized size', size)
 
-  return [txRedeem]
+  // return [txRedeem]
 
-  // return [txPre, txRedeem]
+  return [new Transaction(txPre), new VersionedTransaction(txRedeem)]
 
   // try {
   //   await provider.simulate(transaction, [wallet.payer])

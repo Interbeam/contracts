@@ -318,7 +318,7 @@ describe(' 2: Lending', function () {
         })
 
         await expectTxToSucceed(txs[0], sender)
-        // await expectTxToSucceed(txs[1], sender)
+        await expectVersionedTxToSucceed(txs[1], sender)
 
         const balancesChange = await Promise.all(
           tokenAccounts.map(async (acc, i) => (await getTokenBalance(acc)) - balancesBefore[i])

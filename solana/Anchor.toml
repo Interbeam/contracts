@@ -27,11 +27,11 @@ wallet = "~/.config/solana/id.json"
 test = "npx ts-mocha -p ./tsconfig.json -t 1000000 ts/tests/*.test.ts"
 
 [test]
-startup_wait = 10000
+startup_wait = 30000
 
 [test.validator]
 url = "https://api.mainnet-beta.solana.com"
-warp_slot = "223900000" # warp to some slot after lookup table activation
+warp_slot = "2239" # warp to some slot after lookup table activation
 
 ###
 ###

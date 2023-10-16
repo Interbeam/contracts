@@ -178,7 +178,7 @@ pub struct RedeemWrappedTransferWithPayload<'info> {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct RedeemWrappedTransferWithPayloadParams {
     vaa_hash: [u8; 32],
-    // jupiter_swap_data: Vec<u8>,
+    jupiter_swap_data: Vec<u8>,
 }
 
 pub fn redeem_wrapped_transfer_with_payload(
@@ -242,65 +242,65 @@ pub fn redeem_wrapped_transfer_with_payload(
     // If this instruction were executed by a relayer, send some of the
     // token amount (determined by the relayer fee) to the payer's token
     // account.
-    if ctx.accounts.payer.key() != ctx.accounts.recipient.key() {
-        // Does the relayer have an aassociated token account already? If
-        // not, he needs to create one.
-        require!(
-            !ctx.accounts.payer_token_account.data_is_empty(),
-            InterbeamError::NonExistentRelayerAta
-        );
+    // if ctx.accounts.payer.key() != ctx.accounts.recipient.key() {
+    //     // Does the relayer have an aassociated token account already? If
+    //     // not, he needs to create one.
+    //     require!(
+    //         !ctx.accounts.payer_token_account.data_is_empty(),
+    //         InterbeamError::NonExistentRelayerAta
+    //     );
 
-        let relayer_amount = ctx.accounts.config.compute_relayer_amount(amount);
+    //     let relayer_amount = ctx.accounts.config.compute_relayer_amount(amount);
 
-        // Pay the relayer if there is anything for him.
-        if relayer_amount > 0 {
-            anchor_spl::token::transfer(
-                CpiContext::new_with_signer(
-                    ctx.accounts.token_program.to_account_info(),
-                    anchor_spl::token::Transfer {
-                        from: ctx.accounts.tmp_token_account.to_account_info(),
-                        to: ctx.accounts.payer_token_account.to_account_info(),
-                        authority: ctx.accounts.config.to_account_info(),
-                    },
-                    &[&config_seeds[..]],
-                ),
-                relayer_amount,
-            )?;
-        }
+    //     // Pay the relayer if there is anything for him.
+    //     if relayer_amount > 0 {
+    //         anchor_spl::token::transfer(
+    //             CpiContext::new_with_signer(
+    //                 ctx.accounts.token_program.to_account_info(),
+    //                 anchor_spl::token::Transfer {
+    //                     from: ctx.accounts.tmp_token_account.to_account_info(),
+    //                     to: ctx.accounts.payer_token_account.to_account_info(),
+    //                     authority: ctx.accounts.config.to_account_info(),
+    //                 },
+    //                 &[&config_seeds[..]],
+    //             ),
+    //             relayer_amount,
+    //         )?;
+    //     }
 
-        msg!(
-            "RedeemWrappedTransferWithPayload :: relayed by {:?}",
-            ctx.accounts.payer.key()
-        );
+    //     msg!(
+    //         "RedeemWrappedTransferWithPayload :: relayed by {:?}",
+    //         ctx.accounts.payer.key()
+    //     );
 
-        // Transfer tokens from tmp_token_account to recipient.
-        anchor_spl::token::transfer(
-            CpiContext::new_with_signer(
-                ctx.accounts.token_program.to_account_info(),
-                anchor_spl::token::Transfer {
-                    from: ctx.accounts.tmp_token_account.to_account_info(),
-                    to: ctx.accounts.recipient_token_account.to_account_info(),
-                    authority: ctx.accounts.config.to_account_info(),
-                },
-                &[&config_seeds[..]],
-            ),
-            amount - relayer_amount,
-        )?;
-    } else {
-        // Transfer tokens from tmp_token_account to recipient.
-        anchor_spl::token::transfer(
-            CpiContext::new_with_signer(
-                ctx.accounts.token_program.to_account_info(),
-                anchor_spl::token::Transfer {
-                    from: ctx.accounts.tmp_token_account.to_account_info(),
-                    to: ctx.accounts.recipient_token_account.to_account_info(),
-                    authority: ctx.accounts.config.to_account_info(),
-                },
-                &[&config_seeds[..]],
-            ),
-            amount,
-        )?;
-    }
+    //     // Transfer tokens from tmp_token_account to recipient.
+    //     anchor_spl::token::transfer(
+    //         CpiContext::new_with_signer(
+    //             ctx.accounts.token_program.to_account_info(),
+    //             anchor_spl::token::Transfer {
+    //                 from: ctx.accounts.tmp_token_account.to_account_info(),
+    //                 to: ctx.accounts.recipient_token_account.to_account_info(),
+    //                 authority: ctx.accounts.config.to_account_info(),
+    //             },
+    //             &[&config_seeds[..]],
+    //         ),
+    //         amount - relayer_amount,
+    //     )?;
+    // } else {
+    //     // Transfer tokens from tmp_token_account to recipient.
+    //     anchor_spl::token::transfer(
+    //         CpiContext::new_with_signer(
+    //             ctx.accounts.token_program.to_account_info(),
+    //             anchor_spl::token::Transfer {
+    //                 from: ctx.accounts.tmp_token_account.to_account_info(),
+    //                 to: ctx.accounts.recipient_token_account.to_account_info(),
+    //                 authority: ctx.accounts.config.to_account_info(),
+    //             },
+    //             &[&config_seeds[..]],
+    //         ),
+    //         amount,
+    //     )?;
+    // }
 
     // Transfer tokens from tmp_token_account to recipient.
     // anchor_spl::token::transfer(
@@ -316,32 +316,32 @@ pub fn redeem_wrapped_transfer_with_payload(
     //     amount,
     // )?;
 
-    // let remaining_accounts_infos: Vec<AccountInfo> = ctx
-    //     .remaining_accounts
-    //     .iter()
-    //     .map(|acc| AccountInfo { ..acc.clone() })
-    //     .collect();
+    let remaining_accounts_infos: Vec<AccountInfo> = ctx
+        .remaining_accounts
+        .iter()
+        .map(|acc| AccountInfo { ..acc.clone() })
+        .collect();
 
-    // let swap_route_accounts: Vec<AccountMeta> = remaining_accounts_infos[1..]
-    //     .iter()
-    //     .map(|acc| AccountMeta {
-    //         pubkey: *acc.key,
-    //         is_signer: acc.is_signer,
-    //         is_writable: acc.is_writable,
-    //     })
-    //     .collect();
+    let swap_route_accounts: Vec<AccountMeta> = remaining_accounts_infos[1..]
+        .iter()
+        .map(|acc| AccountMeta {
+            pubkey: *acc.key,
+            is_signer: acc.is_signer,
+            is_writable: acc.is_writable,
+        })
+        .collect();
 
-    // let swap_instruction = Instruction {
-    //     program_id: crate::jupiter::id(), // == JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4
-    //     accounts: swap_route_accounts,
-    //     data: params.jupiter_swap_data.clone(),
-    // };
+    let swap_instruction = Instruction {
+        program_id: crate::jupiter::id(), // == JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4
+        accounts: swap_route_accounts,
+        data: params.jupiter_swap_data.clone(),
+    };
 
-    // program::invoke_signed(
-    //     &swap_instruction,
-    //     &remaining_accounts_infos, // all accounts are for swap (incl Jupiter account)
-    //     &[&config_seeds[..]],
-    // )?;
+    program::invoke_signed(
+        &swap_instruction,
+        &remaining_accounts_infos, // all accounts are for swap (incl Jupiter account)
+        &[&config_seeds[..]],
+    )?;
 
     // TODO: Check the first 8 bytes. Only Jupiter Route CPI allowed.
 
