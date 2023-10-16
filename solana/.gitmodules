@@ -1,0 +1,3 @@
+#[submodule "modules/marginfi"]
+#	path = modules/marginfi
+#  url = https://github.com/mrgnlabs/marginfi-v2

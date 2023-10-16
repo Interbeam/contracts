@@ -61,6 +61,12 @@ impl AnchorDeserialize for TransferWithMeta {
             from_address,
         })
     }
+
+    fn deserialize_reader<R: io::Read>(reader: &mut R) -> io::Result<Self> {
+        let mut buf = vec![];
+        reader.read_to_end(&mut buf)?;
+        Self::deserialize(&mut &buf[..])
+    }
 }
 
 fn to_u16_be(buf: &[u8]) -> u16 {

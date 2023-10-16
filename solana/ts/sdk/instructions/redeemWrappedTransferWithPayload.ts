@@ -19,13 +19,19 @@ import {
 } from '@certusone/wormhole-sdk/lib/cjs/solana/tokenBridge'
 import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import {
+  AddressLookupTableAccount,
   Connection,
   PublicKey,
   PublicKeyInitData,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
-  TransactionInstruction
+  Transaction,
+  TransactionInstruction,
+  TransactionMessage,
+  VersionedTransaction
 } from '@solana/web3.js'
+import { BigNumber } from 'ethers'
+import * as gaxios from 'gaxios'
 
 import {
   deriveForeignContractKey,
@@ -34,8 +40,12 @@ import {
 } from '../accounts'
 import { createInterbeamProgramInterface } from '../program'
 import { InterbeamMessage } from '../types'
+import { getSwapDataForUSDCet2USDC } from '../swap/jupiter'
+import { SVM_USDC, SVM_USDC_WORMHOLE_FROM_ETH } from '../consts-svm'
+import { getAddressLookupTableAccounts } from '../swap/jup-helpers'
+import { PAYER_KEYPAIR } from '../../tests/helpers'
 
-export async function createRedeemWrappedTransferWithPayloadInstruction(
+export async function createRedeemWrappedTransferWithPayloadTx(
   connection: Connection,
   programId: PublicKeyInitData,
   payer: PublicKeyInitData,
@@ -43,7 +53,7 @@ export async function createRedeemWrappedTransferWithPayloadInstruction(
   wormholeProgramId: PublicKeyInitData,
   wormholeMessage: SignedVaa | ParsedTokenTransferVaa,
   payloadParser: (parsed: ParsedTokenTransferVaa) => InterbeamMessage
-): Promise<TransactionInstruction> {
+): Promise<[Transaction]> {
   const program = createInterbeamProgramInterface(connection, programId)
 
   const parsed = isBytes(wormholeMessage) ? parseTokenTransferVaa(wormholeMessage) : wormholeMessage
@@ -66,10 +76,8 @@ export async function createRedeemWrappedTransferWithPayloadInstruction(
   // console.log(`parsed.tokenTransferPayload length: ${parsed.tokenTransferPayload.length}`)
 
   const parsedPayload = payloadParser(parsed)
-  
   const recipient = new PublicKey(parsedPayload.recipient)
-
-  const recipientTokenAccount = getAssociatedTokenAddressSync(wrappedMint, recipient)
+  const recipientTokenAccount = getAssociatedTokenAddressSync(wrappedMint, recipient) // USDCet
 
   console.log('redeem wrapped transfer with payload')
   console.log(
@@ -81,7 +89,30 @@ export async function createRedeemWrappedTransferWithPayloadInstruction(
   console.log('  recipient', recipient.toBase58())
   console.log('  recipientTokenAccount', recipientTokenAccount.toBase58())
 
-  return program.methods
+  // const programTokenAccountUSDC = getAssociatedTokenAddressSync(
+  //   SVM_USDC,
+  //   new PublicKey(programId),
+  //   true
+  // )
+
+  // console.log(parsedPayload.messageLength.toString())
+  // console.log(parsedPayload.messageType.toString())
+  // console.log(parsedPayload.chainId.toString())
+  // console.log(parsedPayload.amountUSDC.toString('hex'))
+  // console.log(parsedPayload.amountTokenA.toString('hex'))
+  // console.log(parsedPayload.amountTokenB.toString('hex'))
+
+  // const { computeBudgetIxs, setupIxs, swapIx, swapAccounts, swapData, addressLookupTableAccounts } =
+  //   await getSwapDataForUSDCet2USDC({
+  //     connection,
+  //     tmpTokenAccountUSDCet: tmpTokenAccount,
+  //     programTokenAccountUSDC,
+  //     // TODO: check against really large conversions, potential overflow
+  //     amount: BigNumber.from(parsedPayload.amountUSDC).toNumber()
+  //   })
+  // console.log(swapData.length, swapData.byteLength, swapData)
+
+  const redeemWrappedTransferWithPayloadIx = await program.methods
     .redeemWrappedTransferWithPayload({ vaaHash: [...parsed.hash] })
     .accounts({
       config: deriveRedeemerConfigKey(programId),
@@ -89,11 +120,43 @@ export async function createRedeemWrappedTransferWithPayloadInstruction(
       tmpTokenAccount,
       recipientTokenAccount,
       recipient,
+      payer: new PublicKey(payer),
       payerTokenAccount: getAssociatedTokenAddressSync(wrappedMint, new PublicKey(payer)),
       tokenBridgeProgram: new PublicKey(tokenBridgeProgramId),
       ...tokenBridgeAccounts
+      // jupiterProgram: new PublicKey('JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4')
     })
+    // .remainingAccounts(swapAccounts)
     .instruction()
+
+  // const instructions = [...computeBudgetIxs, setupIxs]
+
+  // const txPre = new TransactionMessage({
+  //   payerKey: new PublicKey(payer),
+  //   recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
+  //   instructions: [...computeBudgetIxs, ...setupIxs]
+  // }).compileToLegacyMessage()
+  const txRedeem = new Transaction().add(redeemWrappedTransferWithPayloadIx)
+
+  // const serialized = txRedeem.serialize({
+  //   verifySignatures: false,
+  //   requireAllSignatures: false
+  // })
+  // const size = serialized.length + 1 + txRedeem.signatures.length * 64
+  // console.log('serialized size', size)
+
+  return [txRedeem]
+
+  // return [txPre, txRedeem]
+
+  // try {
+  //   await provider.simulate(transaction, [wallet.payer])
+
+  //   const txID = await provider.sendAndConfirm(transaction, [wallet.payer])
+  //   console.log({ txID })
+  // } catch (e) {
+  //   console.log({ simulationResponse: e.simulationResponse })
+  // }
 }
 
 // Temporary

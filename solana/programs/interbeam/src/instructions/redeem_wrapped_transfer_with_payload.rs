@@ -3,6 +3,7 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token::{Token, TokenAccount},
 };
+use solana_program::{instruction::Instruction, program};
 use wormhole_anchor_sdk::{token_bridge, wormhole};
 
 use crate::{
@@ -17,7 +18,7 @@ pub const SEED_PREFIX_BRIDGED: &[u8; 7] = b"bridged";
 pub const SEED_PREFIX_TMP: &[u8; 3] = b"tmp";
 
 #[derive(Accounts)]
-#[instruction(_params: RedeemWrappedTransferWithPayloadParams)]
+#[instruction(params: RedeemWrappedTransferWithPayloadParams)]
 pub struct RedeemWrappedTransferWithPayload<'info> {
     #[account(mut)]
     /// Payer will pay Wormhole fee to transfer tokens and create temporary
@@ -129,7 +130,7 @@ pub struct RedeemWrappedTransferWithPayload<'info> {
     #[account(
         seeds = [
             wormhole::SEED_PREFIX_POSTED_VAA,
-            &_params.vaa_hash
+            &params.vaa_hash
         ],
         bump,
         seeds::program = wormhole_program,
@@ -177,11 +178,12 @@ pub struct RedeemWrappedTransferWithPayload<'info> {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct RedeemWrappedTransferWithPayloadParams {
     vaa_hash: [u8; 32],
+    // jupiter_swap_data: Vec<u8>,
 }
 
 pub fn redeem_wrapped_transfer_with_payload(
     ctx: Context<RedeemWrappedTransferWithPayload>,
-    _params: &RedeemWrappedTransferWithPayloadParams,
+    params: &RedeemWrappedTransferWithPayloadParams,
 ) -> Result<()> {
     // The Token Bridge program's claim account is only initialized when
     // a transfer is redeemed (and the boolean value `true` is written as
@@ -300,6 +302,59 @@ pub fn redeem_wrapped_transfer_with_payload(
         )?;
     }
 
+    // Transfer tokens from tmp_token_account to recipient.
+    // anchor_spl::token::transfer(
+    //     CpiContext::new_with_signer(
+    //         ctx.accounts.token_program.to_account_info(),
+    //         anchor_spl::token::Transfer {
+    //             from: ctx.accounts.tmp_token_account.to_account_info(),
+    //             to: ctx.accounts.recipient_token_account.to_account_info(),
+    //             authority: ctx.accounts.config.to_account_info(),
+    //         },
+    //         &[&config_seeds[..]],
+    //     ),
+    //     amount,
+    // )?;
+
+    // let remaining_accounts_infos: Vec<AccountInfo> = ctx
+    //     .remaining_accounts
+    //     .iter()
+    //     .map(|acc| AccountInfo { ..acc.clone() })
+    //     .collect();
+
+    // let swap_route_accounts: Vec<AccountMeta> = remaining_accounts_infos[1..]
+    //     .iter()
+    //     .map(|acc| AccountMeta {
+    //         pubkey: *acc.key,
+    //         is_signer: acc.is_signer,
+    //         is_writable: acc.is_writable,
+    //     })
+    //     .collect();
+
+    // let swap_instruction = Instruction {
+    //     program_id: crate::jupiter::id(), // == JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4
+    //     accounts: swap_route_accounts,
+    //     data: params.jupiter_swap_data.clone(),
+    // };
+
+    // program::invoke_signed(
+    //     &swap_instruction,
+    //     &remaining_accounts_infos, // all accounts are for swap (incl Jupiter account)
+    //     &[&config_seeds[..]],
+    // )?;
+
+    // TODO: Check the first 8 bytes. Only Jupiter Route CPI allowed.
+
+    // invoke_signed(
+    //     &Instruction {
+    //         program_id: *ctx.accounts.jupiter_program.key,
+    //         accounts,
+    //         data: (*params.jupiter_swap_data).to_vec(),
+    //     },
+    //     &accounts_infos,
+    //     &[],
+    // )?;
+
     // Finish instruction by closing tmp_token_account.
     anchor_spl::token::close_account(CpiContext::new_with_signer(
         ctx.accounts.token_program.to_account_info(),
@@ -311,3 +366,24 @@ pub fn redeem_wrapped_transfer_with_payload(
         &[&config_seeds[..]],
     ))
 }
+
+// Reference:
+// https://github.com/mrgnlabs/marginfi-v2/blob/main/programs/liquidity-incentive-program/src/instructions/create_deposit.rs
+
+// marginfi_cpi::cpi::lending_account_deposit(
+//     CpiContext::new_with_signer(
+//         ctx.accounts.marginfi_program.to_account_info(),
+//         marginfi_cpi::cpi::accounts::LendingAccountDeposit {
+//             marginfi_group: ctx.accounts.marginfi_group.to_account_info(),
+//             marginfi_account: ctx.accounts.marginfi_account.to_account_info(),
+//             signer: ctx.accounts.mfi_pda_signer.to_account_info(),
+//             bank: ctx.accounts.marginfi_bank.to_account_info(),
+//             signer_token_account: ctx.accounts.tmp_token_account.to_account_info(),
+//             bank_liquidity_vault: ctx.accounts.marginfi_bank_vault.to_account_info(),
+//             token_program: ctx.accounts.token_program.to_account_info(),
+//         },
+//         &[&config_seeds[..]],
+//         // &[mfi_signer_seeds],
+//     ),
+//     amount,
+// );

@@ -171,6 +171,12 @@ impl AnchorDeserialize for TransferWithPayload {
             payload: buf[133..].to_vec(),
         })
     }
+
+    fn deserialize_reader<R: io::Read>(reader: &mut R) -> io::Result<Self> {
+        let mut buf = vec![];
+        reader.read_to_end(&mut buf)?;
+        Self::deserialize(&mut &buf[..])
+    }
 }
 
 #[derive(Default, AnchorSerialize, Clone, PartialEq, Eq)]
@@ -240,6 +246,12 @@ impl<P: AnchorSerialize + AnchorDeserialize> AnchorDeserialize for TransferWith<
             meta: TransferWithMeta::deserialize(&mut &buf[..133])?,
             payload: P::deserialize(&mut &buf[133..])?,
         })
+    }
+
+    fn deserialize_reader<R: io::Read>(reader: &mut R) -> io::Result<Self> {
+        let mut buf = vec![];
+        reader.read_to_end(&mut buf)?;
+        Self::deserialize(&mut &buf[..])
     }
 }
 

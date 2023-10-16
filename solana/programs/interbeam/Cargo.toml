@@ -9,7 +9,7 @@ crate-type = ["cdylib", "lib"]
 name = "interbeam"
 
 [features]
-default = ["mainnet"]
+default = ["mainnet", "no-idl"]
 mainnet = ["wormhole-anchor-sdk/mainnet"]
 testnet = ["wormhole-anchor-sdk/solana-devnet"]
 devnet = ["wormhole-anchor-sdk/tilt-devnet"]
@@ -19,13 +19,16 @@ no-log-ix-name = []
 cpi = ["no-entrypoint"]
 
 [dependencies]
-solana-program = "1.16.14"
-# anchor-lang = { git = "https://github.com/coral-xyz/anchor.git", features = ["init-if-needed"]}
-# anchor-spl = { git = "https://github.com/coral-xyz/anchor.git"}
+solana-program = "1.16.16"
+# solana-address-lookup-table-program = "1.16.16"
 
 anchor-lang = { version = "0.28.0", features = ["init-if-needed"]}
 anchor-spl = { version = "0.28.0" }
 
 wormhole-anchor-sdk = { path = "../../modules/wormhole-anchor-sdk", default-features = false, features = ["token-bridge"] }
+
+# CPIs
+# marginfi-cpi = { path = "../../modules/marginfi-cpi", features = ["cpi"] }
+# jupiter-cpi = { path = "../../modules/jupiter-cpi", features = ["cpi"] }
 
 # wormhole-anchor-sdk = { version = "0.1.0-alpha.2", default-features = false, features = ["token-bridge"]}

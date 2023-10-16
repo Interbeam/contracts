@@ -12,22 +12,26 @@ pub mod state;
 
 // cfg_if::cfg_if! {
 //   if #[cfg(feature = "mainnet-beta")] {
-//       declare_id!("MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA");
+//       declare_id!("beamSCX2hEqX9quugQLmze1oZfejyAkA8CfKb9rTkb6");
 //   } else if #[cfg(feature = "devnet")] {
-//       declare_id!("neetcne3Ctrrud7vLdt2ypMm21gZHGN2mCmqWaMVcBQ");
+//       declare_id!("beamSCX2hEqX9quugQLmze1oZfejyAkA8CfKb9rTkb6");
 //   } else {
 //       declare_id!("beam111111111111111111111111111111111111111");
 //   }
 // }
 
-// #[cfg(feature = "mainnet-beta")]
-// declare_id!("MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA");
+#[cfg(feature = "mainnet-beta")]
+declare_id!("beamSCX2hEqX9quugQLmze1oZfejyAkA8CfKb9rTkb6");
 
 // #[cfg(feature = "devnet")]
-// declare_id!("neetcne3Ctrrud7vLdt2ypMm21gZHGN2mCmqWaMVcBQ");
+// declare_id!("beamSCX2hEqX9quugQLmze1oZfejyAkA8CfKb9rTkb6");
 
-// #[cfg(not(feature = "localnet"))]
+#[cfg(not(feature = "localnet"))]
 declare_id!("beam111111111111111111111111111111111111111");
+
+pub mod jupiter {
+  solana_program::declare_id!("JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4");
+}
 
 #[program]
 pub mod interbeam {
@@ -65,12 +69,12 @@ pub mod interbeam {
         instructions::update_relayer_fee(ctx, &params)
     }
 
-    pub fn redeem_native_transfer_with_payload(
-        ctx: Context<RedeemNativeTransferWithPayload>,
-        params: RedeemNativeTransferWithPayloadParams,
-    ) -> Result<()> {
-        instructions::redeem_native_transfer_with_payload(ctx, &params)
-    }
+    // pub fn redeem_native_transfer_with_payload(
+    //     ctx: Context<RedeemNativeTransferWithPayload>,
+    //     params: RedeemNativeTransferWithPayloadParams,
+    // ) -> Result<()> {
+    //     instructions::redeem_native_transfer_with_payload(ctx, &params)
+    // }
 
     pub fn redeem_wrapped_transfer_with_payload(
         ctx: Context<RedeemWrappedTransferWithPayload>,

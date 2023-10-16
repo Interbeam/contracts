@@ -7,6 +7,12 @@ members = [
     "programs/interbeam",
 ]
 
+[programs.mainnet]
+interbeam = "beamSCX2hEqX9quugQLmze1oZfejyAkA8CfKb9rTkb6"
+
+[programs.devnet]
+interbeam = "beamSCX2hEqX9quugQLmze1oZfejyAkA8CfKb9rTkb6"
+
 [programs.localnet]
 interbeam = "beam111111111111111111111111111111111111111"
 
@@ -25,23 +31,166 @@ startup_wait = 10000
 
 [test.validator]
 url = "https://api.mainnet-beta.solana.com"
+warp_slot = "223900000" # warp to some slot after lookup table activation
 
-### MPL Token Metadata
+###
+###
+### Native programs
+###
+###
+
+# Address Lookup Table
 [[test.validator.clone]]
-address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+address = "AddressLookupTab1e1111111111111111111111111"
 
-### Wormhole Core Bridge
+###
+### Modified SPL Tokens
+### (mint authority set to local user)
+###
+
+# USDC 
+[[test.validator.account]]
+address = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+filename = "ts/mint-accounts/usdc.json"
+
+# USDCet => Note that we create USDCet token during test, so don't clone!
+
+###
+### Wormhole
+###
+### dep: MPL Token Metadata
+###
+
+# Wormhole Core Bridge
 [[test.validator.clone]]
 address = "worm2ZoG2kUd4vFXhvjh93UUH596ayRfgQ2MgjNMTth"
 
-### Wormhole Token Bridge
+# Wormhole Token Bridge
 [[test.validator.clone]]
 address = "wormDTUJ6AWPNvk59vGQbDvGJmqbDTdgWgAqcLBCgUb"
 
-### Marginfi V2
+###
+### Marginfi
+###
+### dep: USDC, Pyth
+###
+
+# Marginfi V2 program
 [[test.validator.clone]]
 address = "MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA"
 
+# Marginfi V2 margin_group
+[[test.validator.clone]]
+address = "4qp6Fx6tnZkY5Wropq9wUYgtFxXKwE6viZxFHg3rdAG8"
+
+# Marginfi bank - USDC
+[[test.validator.clone]]
+address = "2s37akK2eyBbp8DZgCm7RtsaEz8eJP3Nxd4urLHQv7yB"
+
+# Marginfi bank liquidity vault - USDC
+[[test.validator.clone]]
+address = "7jaiZR5Sk8hdYN9MxTpczTcwbWpb5WEoxSANuUwveuat"
+
+###
 ### Solend
+###
+### dep: USDC, Pyth
+###
+
+# Solend
 [[test.validator.clone]]
 address = "So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo"
+
+###
+###
+### Jupiter Ag
+###
+### dep: Orca, tokens
+###
+
+# Jupiter v6
+[[test.validator.clone]]
+address = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
+
+# Jupiter Address Lookup Table 1
+[[test.validator.clone]]
+address = "4R2ntCcDDzpqJxQt5XjZ7W9n8Ln1DiiDQfyUKKamy8Bo"
+
+# Jupiter Address Lookup Table 2
+[[test.validator.clone]]
+address = "ExH8FRdyRpXUZX7GCBqKJsTyJiQo4kNgGFMBZSxXg3VQ"
+
+###
+### Orca
+###
+### dep: tokens
+###
+
+# Example USDCet => USDC: https://solscan.io/tx/67HzoXRxgsFHQCSMW3EiWVuhoCXfj3q3V7Bf8RN1YuWwmxztX9c2vwwFu3BhjHqz7zCKPbswJTPiF9JEFy2AU36y
+
+# Orca Whirlpool program
+[[test.validator.clone]]
+address = "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc"
+
+# Pool A: Whirlpool USDCet-USDC (fee 0.1%)
+[[test.validator.clone]]
+address = "8hcwA1hr1bLGLHXBCadXWDgxsc1BTe4hAKPcQgTVNXL4"
+
+# Pool A Token Vault A
+[[test.validator.clone]]
+address = "5GKDU8UxVYZRZtS4oyp91H4ZNw3anys3M2kRtbp7mww1"
+
+# Pool A Token Vault B
+[[test.validator.clone]]
+address = "LS8fRNWyATYcKf6JZf1EA6smbi8z1x16K1ssuTorxz3"
+
+# Pool A tick array 0
+[[test.validator.clone]]
+address = "ACG8u3WjaNZWzp9pwYsP8gX25F63dc1dUACWwPqUQuKt"
+
+# Pool A tick array 1
+[[test.validator.clone]]
+address = "ATAwZxVJBurbE9VJaiJLq93XpEWD2PE64aEVyGpbt7Jq"
+
+# Pool A tick array 2
+[[test.validator.clone]]
+address = "SWK853LnG8gUZmvi9aMWYn4t9wbq2nhTKhGvf8Jc1hj"
+
+# Pool A oracle => don't clone since Orca doesn't use it (uninitialized PDAs)
+
+###
+### Misc.
+###
+
+# MPL Token Metadata (needed for Wormhole)
+[[test.validator.clone]]
+address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+
+
+###
+### Pyth Oracle Prices
+###
+
+# USDC/USD - https://pyth.network/price-feeds/crypto-usdc-usd?cluster=mainnet-beta
+[[test.validator.clone]]
+address = "Gnt27xtC473ZT2Mw5u8wZ68Z3gULkSTb5DuxJy7eJotD"
+
+
+
+
+
+
+[[test.validator.clone]]
+address = "7gFfoUxnwF8gsPi5v3AwYk3ePcJMPiohDXMxZMsaZEmz"
+[[test.validator.clone]]
+address = "JSvtokJbtGsYhneKomFBjnJh4djEQLdHV2kAeS43bBZ"
+[[test.validator.clone]]
+address = "SSwpkEEcbUqx4vtoEByFjSkhKdCT862DNVb52nZg1UZ"
+[[test.validator.clone]]
+address = "GokA1R67GqSavkd15zR62QD68Tuc5AEfvjssntVDEbM8"
+[[test.validator.clone]]
+address = "3YB7hfpBdbQEuZqLGWVDpRPmeZWCUsrrWyqGXegnQ6Cg"
+[[test.validator.clone]]
+address = "4DPCj6Z1DsG6HUtwSogBGqXEUxdEV5a8YVrrFtcnz7UW"
+[[test.validator.clone]]
+address = "A9oXiCQsNdaEe58STWvEEy9NQ1CyAW8WRT6ggwaYetA"

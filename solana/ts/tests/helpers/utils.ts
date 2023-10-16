@@ -11,12 +11,15 @@ import {
   Transaction,
   Signer,
   PublicKey,
-  ComputeBudgetProgram
+  ComputeBudgetProgram,
+  VersionedTransaction,
+  Keypair
 } from '@solana/web3.js'
 import { expect, use as chaiUse, config } from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 
 import { CORE_BRIDGE_PID, MOCK_GUARDIANS } from './consts'
+import { AnchorProvider, Wallet } from '@coral-xyz/anchor'
 
 chaiUse(chaiAsPromised)
 
@@ -142,6 +145,22 @@ export const boilerPlateReduction = (connection: Connection, defaultSigner: Sign
     ).to.be.fulfilled
   }
 
+  const expectVersionedTxToSucceed = async (
+    tx: VersionedTransaction | Promise<VersionedTransaction>,
+    payer?: Signer
+  ) => {
+    const signer = Keypair.fromSecretKey(payer.secretKey)
+    const provider = new AnchorProvider(connection, new Wallet(signer), {
+      commitment: 'confirmed',
+      preflightCommitment: 'confirmed'
+    })
+
+    let _tx = await tx
+    _tx.sign([signer])
+
+    return expect(provider.sendAndConfirm(_tx, [signer])).to.be.fulfilled
+  }
+
   return {
     requestAirdrop,
     guardianSign,
@@ -150,6 +169,7 @@ export const boilerPlateReduction = (connection: Connection, defaultSigner: Sign
     sendAndConfirmIx,
     expectIxToSucceed,
     expectIxToFailWithError,
-    expectTxToSucceed
+    expectTxToSucceed,
+    expectVersionedTxToSucceed
   }
 }

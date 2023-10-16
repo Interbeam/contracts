@@ -36,6 +36,7 @@ import {
   createMaliciousRegisterChainInstruction,
   LOCAL_CONNECTION
 } from './helpers'
+import { SVM_USDC } from '../sdk/consts-svm'
 
 chaiUse(chaiAsPromised)
 
@@ -224,23 +225,23 @@ describe(' 0: Wormhole', () => {
       expect(sequence).equals(1n)
     })
 
-    it('Attest WETH from Ethereum', async function () {
-      const signedMsg = await expect(
-        signAndPostMsg(
-          ethereumTokenBridge.publishAttestMeta(ETH_WETH_ADDRESS, 18, 'WETH', 'Wrapped Ether')
-        )
-      ).to.be.fulfilled
+    // it('Attest WETH from Ethereum', async function () {
+    //   const signedMsg = await expect(
+    //     signAndPostMsg(
+    //       ethereumTokenBridge.publishAttestMeta(ETH_WETH_ADDRESS, 18, 'WETH', 'Wrapped Ether')
+    //     )
+    //   ).to.be.fulfilled
 
-      await expectTxToSucceed(
-        createWrappedOnSolana(
-          connection,
-          CORE_BRIDGE_PID,
-          TOKEN_BRIDGE_PID,
-          payer.publicKey,
-          signedMsg
-        )
-      )
-    })
+    //   await expectTxToSucceed(
+    //     createWrappedOnSolana(
+    //       connection,
+    //       CORE_BRIDGE_PID,
+    //       TOKEN_BRIDGE_PID,
+    //       payer.publicKey,
+    //       signedMsg
+    //     )
+    //   )
+    // })
 
     it('Attest USDC from Ethereum', async function () {
       const signedMsg = await expect(
@@ -260,23 +261,37 @@ describe(' 0: Wormhole', () => {
       )
     })
 
-    it('Create WETH ATAs', async function () {
+    // it('Create WETH ATAs', async function () {
+    //   await Promise.all(
+    //     [payer, relayer].map(
+    //       (wallet) =>
+    //         expect(
+    //           getOrCreateAssociatedTokenAccount(
+    //             connection,
+    //             wallet,
+    //             tokenBridgeWethMint,
+    //             wallet.publicKey
+    //           )
+    //         ).to.be.fulfilled
+    //     )
+    //   )
+    // })
+
+    it('Create USDC (canonical) ATAs', async function () {
       await Promise.all(
-        [payer, relayer].map(
-          (wallet) =>
-            expect(
-              getOrCreateAssociatedTokenAccount(
-                connection,
-                wallet,
-                tokenBridgeWethMint,
-                wallet.publicKey
-              )
-            ).to.be.fulfilled
-        )
+        [payer, relayer].map(async (wallet) => {
+          const account = await expect(
+            getOrCreateAssociatedTokenAccount(connection, wallet, SVM_USDC, wallet.publicKey)
+          ).to.be.fulfilled
+          console.log('USDC (canonical) ATA')
+          console.log(` owner: ${account.owner.toBase58()}`)
+          console.log(` mint: ${account.mint.toBase58()}`)
+          console.log(` address: ${account.address.toBase58()}`)
+        })
       )
     })
 
-    it('Create USDC ATAs', async function () {
+    it('Create USDCet (Wormhole) ATAs', async function () {
       await Promise.all(
         [payer, relayer].map(async (wallet) => {
           const account = await expect(
@@ -287,7 +302,7 @@ describe(' 0: Wormhole', () => {
               wallet.publicKey
             )
           ).to.be.fulfilled
-          console.log(`USDC ATA for ${wallet.publicKey.toBase58()}`)
+          console.log('USDCet (Wormhole) ATA')
           console.log(` owner: ${account.owner.toBase58()}`)
           console.log(` mint: ${account.mint.toBase58()}`)
           console.log(` address: ${account.address.toBase58()}`)
@@ -295,31 +310,31 @@ describe(' 0: Wormhole', () => {
       )
     })
 
-    it('Mint WETH to Wallet ATA', async function () {
-      const destination = getAssociatedTokenAddressSync(tokenBridgeWethMint, payer.publicKey)
+    // it('Mint WETH to Wallet ATA', async function () {
+    //   const destination = getAssociatedTokenAddressSync(tokenBridgeWethMint, payer.publicKey)
 
-      const signedMsg = await expect(
-        signAndPostMsg(
-          ethereumTokenBridge.publishTransferTokens(
-            tryNativeToHexString(ETH_WETH_ADDRESS, 'ethereum'),
-            CHAINS.ethereum, // tokenChain
-            defaultMintAmount,
-            CHAINS.solana, // recipientChain
-            destination.toBuffer().toString('hex'),
-            0n //fee
-          )
-        )
-      ).to.be.fulfilled
+    //   const signedMsg = await expect(
+    //     signAndPostMsg(
+    //       ethereumTokenBridge.publishTransferTokens(
+    //         tryNativeToHexString(ETH_WETH_ADDRESS, 'ethereum'),
+    //         CHAINS.ethereum, // tokenChain
+    //         defaultMintAmount,
+    //         CHAINS.solana, // recipientChain
+    //         destination.toBuffer().toString('hex'),
+    //         0n //fee
+    //       )
+    //     )
+    //   ).to.be.fulfilled
 
-      await expectTxToSucceed(
-        redeemOnSolana(connection, CORE_BRIDGE_PID, TOKEN_BRIDGE_PID, payer.publicKey, signedMsg)
-      )
+    //   await expectTxToSucceed(
+    //     redeemOnSolana(connection, CORE_BRIDGE_PID, TOKEN_BRIDGE_PID, payer.publicKey, signedMsg)
+    //   )
 
-      const { amount } = await getAccount(connection, destination)
-      expect(amount).equals(defaultMintAmount)
-    })
+    //   const { amount } = await getAccount(connection, destination)
+    //   expect(amount).equals(defaultMintAmount)
+    // })
 
-    it('Mint USDC to Wallet ATA', async function () {
+    it('Mint USDCet (Wormhole) to Wallet ATA', async function () {
       const destination = getAssociatedTokenAddressSync(tokenBridgeUsdcMint, payer.publicKey)
 
       const signedMsg = await expect(

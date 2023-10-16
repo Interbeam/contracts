@@ -176,6 +176,12 @@ impl AnchorDeserialize for InterbeamMessage {
             payload_size,
         })
     }
+
+    fn deserialize_reader<R: io::Read>(reader: &mut R) -> io::Result<Self> {
+        let mut buf = Vec::new();
+        reader.read_to_end(&mut buf)?;
+        Self::deserialize(&mut buf.as_slice())
+    }
 }
 
 pub type PostedInterbeamMessage = token_bridge::PostedTransferWith<InterbeamMessage>;

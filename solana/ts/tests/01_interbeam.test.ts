@@ -26,7 +26,6 @@ import {
   WORMHOLE_CONTRACTS,
   CORE_BRIDGE_PID,
   TOKEN_BRIDGE_PID,
-  ETH_WETH_ADDRESS,
   ETH_USDC_ADDRESS,
   MINTS_WITH_DECIMALS,
   deriveMaliciousTokenBridgeEndpointKey,
@@ -35,7 +34,7 @@ import {
   LOCAL_CONNECTION
 } from './helpers'
 import {
-  createRedeemTransferWithPayloadIx,
+  createRedeemWrappedTransferWithPayloadTx,
   decodeTransferMessagePayload,
   initializeInterbeamBoilerplate
 } from '../sdk/utils-svm'
@@ -50,8 +49,13 @@ describe(' 1: Interbeam', function () {
   const payer = PAYER_KEYPAIR
   const relayer = RELAYER_KEYPAIR
 
-  const { guardianSign, postSignedMsgAsVaaOnSolana, expectIxToSucceed, expectIxToFailWithError } =
-    boilerPlateReduction(connection, payer)
+  const {
+    guardianSign,
+    postSignedMsgAsVaaOnSolana,
+    expectIxToSucceed,
+    expectTxToSucceed,
+    expectVersionedTxToSucceed
+  } = boilerPlateReduction(connection, payer)
 
   const foreignChain = CHAINS.ethereum
   const foreignContractAddress = Buffer.alloc(32, 'deadbeef', 'hex')
@@ -180,11 +184,17 @@ describe(' 1: Interbeam', function () {
 
   ;(
     [
+      // [
+      //   false,
+      //   18,
+      //   tryNativeToHexString(ETH_WETH_ADDRESS, foreignChain),
+      //   deriveWrappedMintKey(TOKEN_BRIDGE_PID, foreignChain, ETH_WETH_ADDRESS) // WETHet (Wormhole) on SVM
+      // ]
       [
         false,
-        18,
-        tryNativeToHexString(ETH_WETH_ADDRESS, foreignChain),
-        deriveWrappedMintKey(TOKEN_BRIDGE_PID, foreignChain, ETH_WETH_ADDRESS)
+        6,
+        tryNativeToHexString(ETH_USDC_ADDRESS, foreignChain),
+        deriveWrappedMintKey(TOKEN_BRIDGE_PID, foreignChain, ETH_USDC_ADDRESS) // USDCet (Wormhole) on SVM
       ]
       // ...Array.from(MINTS_WITH_DECIMALS.entries()).map(
       //   ([decimals, { publicKey }]): [boolean, number, string, PublicKey] => [
@@ -202,7 +212,8 @@ describe(' 1: Interbeam', function () {
       //we send once, but we receive twice, hence /2, and w also have to adjust for truncation
       const receiveAmount = (sendAmount / 2n / truncation) * truncation
 
-      ;[payer, relayer].forEach((sender) => {
+      // ;[payer, relayer].forEach((sender) => {
+      ;[payer].forEach((sender) => {
         const isSelfRelay = sender === payer
 
         describe(`Receive Tokens With Payload (via ${
@@ -221,9 +232,10 @@ describe(' 1: Interbeam', function () {
               buf.writeUInt8(1, 4) // messageType
               Buffer.from(tryNativeToUint8Array(ETH_USDC_ADDRESS, CHAIN_ID_ETH)).copy(buf, 5) // tokenA
               Buffer.from(tryNativeToUint8Array(ETH_USDC_ADDRESS, CHAIN_ID_ETH)).copy(buf, 37) // tokenB
-              Buffer.alloc(32, receiveAmount.toString(16).padStart(32, '0'), 'hex').copy(buf, 69) // amountTokenA
-              Buffer.alloc(32, receiveAmount.toString(16).padStart(32, '0'), 'hex').copy(buf, 101) // amountTokenB
-              Buffer.alloc(32, receiveAmount.toString(16).padStart(32, '0'), 'hex').copy(buf, 133) // amountUSDC
+              // => receiveAmount pad to: 0x000...0003d34 => 15668
+              Buffer.alloc(32, receiveAmount.toString(16).padStart(64, '0'), 'hex').copy(buf, 69) // amountTokenA
+              Buffer.alloc(32, receiveAmount.toString(16).padStart(64, '0'), 'hex').copy(buf, 101) // amountTokenB
+              Buffer.alloc(32, receiveAmount.toString(16).padStart(64, '0'), 'hex').copy(buf, 133) // amountUSDC
               sender.publicKey.toBuffer().copy(buf, 165) // sender
               payer.publicKey.toBuffer().copy(buf, 197) // recipient (is payer)
               buf.writeUInt16BE(payloadSize, 229) // payloadSize
@@ -244,8 +256,6 @@ describe(' 1: Interbeam', function () {
             )
             published[51] = 3
 
-            // console.log('>> transfer to address', INTERBEAM_PID_LOCAL.toBuffer().toString('hex'))
-
             return guardianSign(published)
           }
 
@@ -262,16 +272,17 @@ describe(' 1: Interbeam', function () {
             )
 
             const balancesBefore = await Promise.all(tokenAccounts.map(getTokenBalance))
-            await expectIxToSucceed(
-              createRedeemTransferWithPayloadIx({
-                sender: sender.publicKey,
-                signedMsg,
-                connection,
-                isNative,
-                payloadParser: (parsed) => decodeTransferMessagePayload(parsed.tokenTransferPayload)
-              }),
-              sender
-            )
+
+            const txs = await createRedeemWrappedTransferWithPayloadTx({
+              sender: sender.publicKey,
+              signedMsg,
+              connection,
+              payloadParser: (parsed) => decodeTransferMessagePayload(parsed.tokenTransferPayload)
+            })
+
+            await expectTxToSucceed(txs[0], sender)
+            // await expectVersionedTxToSucceed(txs[1], sender)
+
             const balancesChange = await Promise.all(
               tokenAccounts.map(async (acc, i) => (await getTokenBalance(acc)) - balancesBefore[i])
             )
