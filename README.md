@@ -20,5 +20,6 @@ make gen-types && make cp-types
 CLI tab 3:
 ```bash
 cd svm && pnpm i
+MINT_AUTHORITY=your_account_pubkey python ts/load-mint-accounts.py
 NETWORK=devnet make integration-test
 ```
