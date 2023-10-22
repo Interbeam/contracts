@@ -13,8 +13,13 @@ contract Util is Test {
     constructor(address _usdc) {
         USDC = IUSDC(_usdc);
 
-        vm.prank(USDC.masterMinter());
-        USDC.configureMinter(address(this), type(uint256).max);
+        if (block.chainid == 137) {
+            // do nothing
+        } else {
+            // if official USDC, then configuer masterMinter
+            vm.prank(USDC.masterMinter());
+            USDC.configureMinter(address(this), type(uint256).max);
+        }
     }
 
     function getNextUserAddress() external returns (address payable) {
