@@ -11,6 +11,9 @@ dependencies:
   '@coral-xyz/anchor':
     specifier: ^0.27.0
     version: 0.27.0
+  '@ethersproject/providers':
+    specifier: ^5.7.2
+    version: 5.7.2
   '@jup-ag/api':
     specifier: ^6.0.6
     version: 6.0.6
@@ -20,9 +23,15 @@ dependencies:
   '@solana/spl-token':
     specifier: ^0.3.8
     version: 0.3.8(@solana/web3.js@1.87.1)
+  '@solana/web3.js':
+    specifier: ^1.87.1
+    version: 1.87.1
   big.js:
     specifier: ^6.2.1
     version: 6.2.1
+  dotenv:
+    specifier: ^16.3.1
+    version: 16.3.1
   ethers:
     specifier: ^5.7.2
     version: 5.7.2
@@ -2584,6 +2593,11 @@ packages:
     dependencies:
       no-case: 3.0.4
       tslib: 2.6.2
+    dev: false
+
+  /dotenv@16.3.1:
+    resolution: {integrity: sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==}
+    engines: {node: '>=12'}
     dev: false
 
   /drbg.js@1.0.1:

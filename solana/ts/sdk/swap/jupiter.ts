@@ -9,22 +9,19 @@ import {
 
 const JUPAG_API_ENDPOINT = 'https://quote-api.jup.ag/v6'
 
-gaxios.instance.defaults = {
-  baseURL: JUPAG_API_ENDPOINT,
-  headers: {
-    Accept: 'application/json',
-    'Content-Type': 'application/json'
-  }
-}
-
 export async function getQuote(fromMint: PublicKey, toMint: PublicKey, amount: number) {
   const url = `${JUPAG_API_ENDPOINT}/quote?outputMint=${toMint.toBase58()}&inputMint=${fromMint.toBase58()}&amount=${amount}&slippage=0.5&onlyDirectRoutes=true`
   console.log('Get Quote URL', url)
 
   return gaxios
     .request({
+      baseURL: JUPAG_API_ENDPOINT,
       url: '/quote',
       method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
       params: {
         outputMint: toMint.toBase58(),
         inputMint: fromMint.toBase58(),
@@ -51,8 +48,13 @@ export async function getSwapTx(sender: PublicKey, recipientTokenAccount: Public
       swapTransaction: string // returns base64 encoded transaction
       lastValidBlockHeight: number
     }>({
+      baseURL: JUPAG_API_ENDPOINT,
       url: '/swap',
       method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
       data: JSON.stringify(data)
     })
     .then((response) => {
@@ -76,8 +78,13 @@ export async function getSwapIx(user: PublicKey, destinationTokenAccount: Public
       swapInstruction: any
       addressLookupTableAddresses: string[]
     }>({
+      baseURL: JUPAG_API_ENDPOINT,
       url: '/swap-instructions',
       method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
       data: JSON.stringify(data)
     })
     .then((response) => {

@@ -110,21 +110,41 @@ export function createRegisterForeignContractIx(opts: {
 //   )
 // }
 
-export function createRedeemWrappedTransferWithPayloadTx(opts: {
+export async function createRedeemWrappedTransferWithPayloadAndSwapTx(opts: {
   sender: PublicKey
   signedMsg: Buffer
   connection: Connection
   payloadParser: (parsed: ParsedTokenTransferVaa) => InterbeamMessage
+  programId?: PublicKey
 }) {
-  return interbeam.createRedeemWrappedTransferWithPayloadTx(
+  return interbeam.createRedeemWrappedTransferWithPayloadAndSwapTx(
     opts.connection,
-    INTERBEAM_PID_LOCAL,
+    opts.programId ?? INTERBEAM_PID_LOCAL,
     opts.sender,
     TOKEN_BRIDGE_PID,
     CORE_BRIDGE_PID,
     opts.signedMsg,
     opts.payloadParser
   )
+}
+
+export async function createRedeemWrappedTransferWithPayloadTx(opts: {
+  sender: PublicKey
+  signedMsg: Buffer
+  connection: Connection
+  payloadParser: (parsed: ParsedTokenTransferVaa) => InterbeamMessage
+  programId?: PublicKey
+}) {
+  const ix = await interbeam.createRedeemWrappedTransferWithPayloadIx(
+    opts.connection,
+    opts.programId ?? INTERBEAM_PID_LOCAL,
+    opts.sender,
+    TOKEN_BRIDGE_PID,
+    CORE_BRIDGE_PID,
+    opts.signedMsg,
+    opts.payloadParser
+  )
+  return new Transaction().add(ix)
 }
 
 // export const getWormholeSequence = async () =>

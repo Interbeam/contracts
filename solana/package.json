@@ -6,10 +6,13 @@
   "dependencies": {
     "@certusone/wormhole-sdk": "^0.9.14",
     "@coral-xyz/anchor": "^0.27.0",
+    "@ethersproject/providers": "^5.7.2",
     "@jup-ag/api": "^6.0.6",
     "@mrgnlabs/marginfi-client-v2": "^2.1.1",
     "@solana/spl-token": "^0.3.8",
+    "@solana/web3.js": "^1.87.1",
     "big.js": "^6.2.1",
+    "dotenv": "^16.3.1",
     "ethers": "^5.7.2",
     "gaxios": "^6.1.1",
     "jsbi": "^4.3.0"

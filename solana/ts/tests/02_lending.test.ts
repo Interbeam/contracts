@@ -43,7 +43,7 @@ import { formatWormholeMessageFromReceipt } from '../sdk/utils-evm'
 import {
   createAddressLookupTableIx,
   createAndMintToAssociatedTokenAccount,
-  createRedeemWrappedTransferWithPayloadTx,
+  createRedeemWrappedTransferWithPayloadAndSwapTx,
   decodeTransferMessagePayload,
   extendAddressLookupTableIx,
   initializeInterbeamBoilerplate,
@@ -310,7 +310,7 @@ describe(' 2: Lending', function () {
 
         const balancesBefore = await Promise.all(tokenAccounts.map(getTokenBalance))
 
-        const txs = await createRedeemWrappedTransferWithPayloadTx({
+        const txs = await createRedeemWrappedTransferWithPayloadAndSwapTx({
           sender: sender.publicKey,
           signedMsg,
           connection,
@@ -352,11 +352,17 @@ describe(' 2: Lending', function () {
 
         // Sign & Execute the swap transaction
         swapTransaction.sign([payer])
-        const txid = await connection.sendRawTransaction(swapTransaction.serialize(), {
+        const swapTxId = await connection.sendRawTransaction(swapTransaction.serialize(), {
           skipPreflight: true,
           maxRetries: 2
         })
-        await connection.confirmTransaction(txid)
+
+        const latestBlockHash = await connection.getLatestBlockhash()
+        await connection.confirmTransaction({
+          blockhash: latestBlockHash.blockhash,
+          lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+          signature: swapTxId
+        })
 
         const balanceChange = (await getTokenBalance(payerUsdcAtaKey)) - balanceBefore
         console.log('balanceChange', balanceChange)

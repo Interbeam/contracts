@@ -45,7 +45,7 @@ import { SVM_USDC, SVM_USDC_WORMHOLE_FROM_ETH } from '../consts-svm'
 import { getAddressLookupTableAccounts } from '../swap/jup-helpers'
 import { PAYER_KEYPAIR } from '../../tests/helpers'
 
-export async function createRedeemWrappedTransferWithPayloadTx(
+export async function createRedeemWrappedTransferWithPayloadAndSwapTx(
   connection: Connection,
   programId: PublicKeyInitData,
   payer: PublicKeyInitData,
@@ -163,6 +163,78 @@ export async function createRedeemWrappedTransferWithPayloadTx(
   // } catch (e) {
   //   console.log({ simulationResponse: e.simulationResponse })
   // }
+}
+
+export async function createRedeemWrappedTransferWithPayloadIx(
+  connection: Connection,
+  programId: PublicKeyInitData,
+  payer: PublicKeyInitData,
+  tokenBridgeProgramId: PublicKeyInitData,
+  wormholeProgramId: PublicKeyInitData,
+  wormholeMessage: SignedVaa | ParsedTokenTransferVaa,
+  payloadParser: (parsed: ParsedTokenTransferVaa) => InterbeamMessage
+): Promise<TransactionInstruction> {
+  const program = createInterbeamProgramInterface(connection, programId)
+
+  const parsed = isBytes(wormholeMessage) ? parseTokenTransferVaa(wormholeMessage) : wormholeMessage
+
+  const wrappedMint = deriveWrappedMintKey(
+    tokenBridgeProgramId,
+    parsed.tokenChain,
+    parsed.tokenAddress
+  )
+
+  const tmpTokenAccount = deriveTmpTokenAccountKey(programId, wrappedMint)
+  const tokenBridgeAccounts = getCompleteTransferWrappedWithPayloadCpiAccounts(
+    tokenBridgeProgramId,
+    wormholeProgramId,
+    payer,
+    parsed,
+    tmpTokenAccount
+  )
+
+  const parsedPayload = payloadParser(parsed)
+  const recipient = new PublicKey(parsedPayload.recipient)
+  const recipientTokenAccount = getAssociatedTokenAddressSync(wrappedMint, recipient) // USDCet
+
+  // console.log('redeem wrapped transfer with payload')
+  // console.log(
+  //   '  tokenAddress',
+  //   tryHexToNativeAssetString(parsed.tokenAddress.toString('hex'), CHAIN_ID_ETH)
+  // )
+  // console.log('  wrappedMint', wrappedMint.toBase58())
+  // console.log('  payer', tokenBridgeAccounts.payer.toBase58())
+  // console.log('  recipient', recipient.toBase58())
+  // console.log('  recipientTokenAccount', recipientTokenAccount.toBase58())
+  console.log('tokenBridgeAccounts', tokenBridgeAccounts)
+
+  console.log('parsedPayload', parsedPayload)
+  // console.log(parsedPayload.messageLength.toString())
+  // console.log(parsedPayload.messageType.toString())
+  // console.log(parsedPayload.chainId.toString())
+  // console.log(parsedPayload.amountUSDC.toString('hex'))
+  // console.log(parsedPayload.amountTokenA.toString('hex'))
+  // console.log(parsedPayload.amountTokenB.toString('hex'))
+
+  const redeemWrappedTransferWithPayloadIx = await program.methods
+    .redeemWrappedTransferWithPayload({
+      vaaHash: [...parsed.hash],
+      jupiterSwapData: Buffer.alloc(0)
+    })
+    .accounts({
+      config: deriveRedeemerConfigKey(programId),
+      foreignContract: deriveForeignContractKey(programId, parsed.emitterChain as ChainId),
+      tmpTokenAccount,
+      recipientTokenAccount,
+      recipient,
+      payer: new PublicKey(payer),
+      payerTokenAccount: getAssociatedTokenAddressSync(wrappedMint, new PublicKey(payer)),
+      tokenBridgeProgram: new PublicKey(tokenBridgeProgramId),
+      ...tokenBridgeAccounts
+    })
+    .instruction()
+
+  return redeemWrappedTransferWithPayloadIx
 }
 
 // Temporary

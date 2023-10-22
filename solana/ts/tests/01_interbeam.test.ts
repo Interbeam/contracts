@@ -34,7 +34,7 @@ import {
   LOCAL_CONNECTION
 } from './helpers'
 import {
-  createRedeemWrappedTransferWithPayloadTx,
+  createRedeemWrappedTransferWithPayloadAndSwapTx,
   decodeTransferMessagePayload,
   initializeInterbeamBoilerplate
 } from '../sdk/utils-svm'
@@ -273,7 +273,7 @@ describe(' 1: Interbeam', function () {
 
             const balancesBefore = await Promise.all(tokenAccounts.map(getTokenBalance))
 
-            const txs = await createRedeemWrappedTransferWithPayloadTx({
+            const txs = await createRedeemWrappedTransferWithPayloadAndSwapTx({
               sender: sender.publicKey,
               signedMsg,
               connection,

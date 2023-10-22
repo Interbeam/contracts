@@ -11,7 +11,7 @@ pub mod message;
 pub mod state;
 
 // cfg_if::cfg_if! {
-//   if #[cfg(feature = "mainnet-beta")] {
+//   if #[cfg(feature = "mainnet")] {
 //       declare_id!("beamSCX2hEqX9quugQLmze1oZfejyAkA8CfKb9rTkb6");
 //   } else if #[cfg(feature = "devnet")] {
 //       declare_id!("beamSCX2hEqX9quugQLmze1oZfejyAkA8CfKb9rTkb6");
@@ -20,17 +20,17 @@ pub mod state;
 //   }
 // }
 
-#[cfg(feature = "mainnet-beta")]
+#[cfg(feature = "mainnet")]
 declare_id!("beamSCX2hEqX9quugQLmze1oZfejyAkA8CfKb9rTkb6");
 
 // #[cfg(feature = "devnet")]
 // declare_id!("beamSCX2hEqX9quugQLmze1oZfejyAkA8CfKb9rTkb6");
 
-#[cfg(not(feature = "localnet"))]
+#[cfg(not(feature = "mainnet"))]
 declare_id!("beam111111111111111111111111111111111111111");
 
 pub mod jupiter {
-  solana_program::declare_id!("JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4");
+    solana_program::declare_id!("JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4");
 }
 
 #[program]

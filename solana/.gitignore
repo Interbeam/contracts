@@ -4,6 +4,7 @@ target
 **/*.rs.bk
 node_modules
 test-ledger
-.keypair
+_keypair
+.env*
 
 ts/sdk/types-typechain
